@@ -1,77 +1,46 @@
+name: insastronaute-local
 services:
-  app:
-    image: insastronaute-backend:latest
-    env_file:
-      - .env
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: insastronaute-webapi
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      # Le schema de l'API, ouvert ici et ferme en production : c'est l'environnement de
-      # test qui sert a l'explorer.
-      - 'SPRINGDOC_ENABLED=${SPRINGDOC_ENABLED:-true}'
-      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/insastronaute'
-      - 'SPRING_DATASOURCE_USERNAME=${DB_NAME}'
-      - 'SPRING_DATASOURCE_PASSWORD=${DB_PSSWD}'
-      - 'SPRING_DATA_REDIS_HOST=redis'
-      - 'SPRING_DATA_REDIS_PORT=6379'
-      - 'KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}'
-      - 'SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=${KEYCLOAK_ISSUER_URI:-http://host.docker.internal:8081/realms/inte}'
-      - 'APP_SECURITY_FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-}'
-      - 'DOMAIN=${DOMAIN:-}'
-      - 'APP_SECURITY_ALLOWED_SUBDOMAINS=${APP_SECURITY_ALLOWED_SUBDOMAINS:-}'
-      - 'APP_STS_DEBUG_COMBAT_ENABLED=${APP_STS_DEBUG_COMBAT_ENABLED:-true}'
-      - 'APP_STS_PVP_ENABLED=${APP_STS_PVP_ENABLED:-false}'
-      - 'APP_PUSH_ENABLED=${APP_PUSH_ENABLED:-false}'
-      - 'APP_PUSH_SUBJECT=${APP_PUSH_SUBJECT:-}'
-      - 'APP_PUSH_VAPID_PUBLIC_KEY=${APP_PUSH_VAPID_PUBLIC_KEY:-}'
-      - 'APP_PUSH_VAPID_PRIVATE_KEY=${APP_PUSH_VAPID_PRIVATE_KEY:-}'
-      - 'S3_ENDPOINT=${S3_ENDPOINT:-}'
-      - 'S3_ACCESS_KEY=${S3_ACCESS_KEY:-}'
-      - 'S3_SECRET_KEY=${S3_SECRET_KEY:-}'
-      - 'S3_REGION=${S3_REGION:-eu-fr}'
-      - 'S3_BUCKET=${S3_BUCKET:-insastronaute-proofs}'
-    ports:
-      - '3457:3457'
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-
   postgres:
-    image: 'postgres:17'
-    container_name: insastronaute-app-db
-    restart: unless-stopped
+    image: postgres:17
     environment:
-      - 'POSTGRES_DB=insastronaute'
-      - 'POSTGRES_PASSWORD=${DB_PSSWD}'
-      - 'POSTGRES_USER=${DB_NAME}'
-    ports:
-      - '5433:5432'
-    volumes:
-      - app-db-data:/var/lib/postgresql/data
+      POSTGRES_DB: insastronaute
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-insastronaute}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-local-database-password}
+    ports: ["127.0.0.1:15432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
     healthcheck:
-      test: [ 'CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' ]
-      interval: 10s
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 20
   redis:
-    image: 'redis:8-alpine'
-    container_name: insastronaute-app-redis
-    restart: unless-stopped
-    ports:
-      - '6379:6379'
+    image: redis:8-alpine
+    ports: ["127.0.0.1:16379:6379"]
     healthcheck:
-      test: [ 'CMD', 'redis-cli', 'ping' ]
-      interval: 10s
+      test: [CMD, redis-cli, ping]
+      interval: 5s
       timeout: 5s
-      retries: 5
-
+      retries: 20
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: [start-dev, --import-realm]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: local-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: local-admin-password
+      KC_HOSTNAME: http://localhost:18080
+    ports: ["127.0.0.1:18080:8080"]
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./docker/keycloak/insastronaute-realm.json:/opt/keycloak/data/import/insastronaute-realm.json:ro
+  s3:
+    image: chrislusf/seaweedfs:4.53
+    command: [mini, -dir=/data]
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-local-access-key}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-local-secret-key}
+    ports: ["127.0.0.1:18333:8333"]
+    volumes: ["s3-data:/data"]
 volumes:
-  app-db-data:
+  postgres-data:
+  keycloak-data:
+  s3-data:

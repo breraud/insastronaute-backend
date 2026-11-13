@@ -1,80 +1,58 @@
+name: insastronaute-prod
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: insastronaute-webapi:latest
-    container_name: insastronaute-webapi
+    image: insastronaute-backend:local
+    build: .
+    restart: unless-stopped
+    env_file: ${APP_ENV_FILE:-.env.prod}
+    environment:
+      SERVER_PORT: 3457
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY: "true"
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: "true"
+      SERVER_SERVLET_SESSION_COOKIE_SAME_SITE: none
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${APP_DB_NAME:?Set APP_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?Set POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+      APP_AUTH_GATE_SECRET: ${APP_AUTH_GATE_SECRET:?Set a unique APP_AUTH_GATE_SECRET}
+      APP_SECURITY_PRODUCTION_HARDENING_ENABLED: "true"
+      APP_STS_DEBUG_COMBAT_ENABLED: "false"
+      SPRINGDOC_ENABLED: "false"
+    ports: ["127.0.0.1:${BACKEND_PORT:-3457}:3457"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  postgres:
+    image: postgres:17
     restart: unless-stopped
     environment:
-      - SERVER_PORT=3457
-      - SERVER_FORWARD_HEADERS_STRATEGY=framework
-      - SERVER_SERVLET_SESSION_TIMEOUT=${SERVER_SERVLET_SESSION_TIMEOUT:-8h}
-      - SERVER_SERVLET_SESSION_COOKIE_MAX_AGE=${SERVER_SERVLET_SESSION_COOKIE_MAX_AGE:-8h}
-      - SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY=true
-      - SERVER_SERVLET_SESSION_COOKIE_SECURE=true
-      - SERVER_SERVLET_SESSION_COOKIE_SAME_SITE=${SERVER_SERVLET_SESSION_COOKIE_SAME_SITE:-none}
-      - SPRING_SESSION_STORE_TYPE=redis
-      - SPRING_SESSION_REDIS_NAMESPACE=${SPRING_SESSION_REDIS_NAMESPACE:-insastronaute:sessions}
-
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${APP_DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
-
-      - S3_ENDPOINT=http://seaweedfs:8333
-      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_KEY=${S3_SECRET_KEY}
-      - S3_REGION=${S3_REGION:-eu-fr}
-      - S3_BUCKET=${S3_BUCKET:-insastronaute-proofs}
-      - S3_PUBLIC_BUCKET=${S3_PUBLIC_BUCKET:-insastronaute-public}
-      - S3_BUCKET_INITIALIZATION_ENABLED=true
-      - S3_BUCKET_CORS_ENABLED=true
-      - S3_PUBLIC_BUCKET_INITIALIZATION_ENABLED=true
-      - S3_PUBLIC_BUCKET_RUN_ACL_HARDENING_ENABLED=true
-      - S3_FAIL_ON_POLICY_ERROR=true
-      - S3_FAIL_ON_CORS_ERROR=true
-      - S3_FAIL_ON_ACL_ERROR=true
-
-      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-inte-backend}
-      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
-      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_ISSUER_URI}
-      # Par ou joindre Keycloak pour l'administration -- lecture des membres d'un role,
-      # attribution du role STUDENT, groupes de departement. Ces appels sont de serveur a
-      # serveur : sortis par l'emetteur public, ils traversent Cloudflare, dont le defi
-      # « managed » attend un navigateur et repond une page HTML en 403. Vide, on garde
-      # l'emetteur.
-      - KEYCLOAK_ADMIN_BASE_URL=${KEYCLOAK_ADMIN_BASE_URL:-}
-
-      - APP_SECURITY_FRONTEND_BASE_URL=${FRONTEND_BASE_URL}
-      # Ferme, et ecrit plutot que sous-entendu : quelqu'un qui lit ce fichier pour savoir
-      # si le schema de l'API est expose doit trouver la reponse ici. Le defaut de
-      # l'application est deja `false` -- retirer cette ligne ne l'ouvrirait pas.
-      - SPRINGDOC_ENABLED=false
-      # Le code qui fait sauter la file d'attente. Absent, le raccourci n'existe pas -- et il
-      # doit figurer ici : ce compose passe les variables une par une, sans env_file, donc
-      # une variable posee dans le seul .env sert a la substitution et n'atteint jamais le
-      # conteneur.
-      - APP_AUTH_GATE_FAST_PASS_CODE=${APP_AUTH_GATE_FAST_PASS_CODE:-}
-      - APP_AUTH_GATE_SECRET=${APP_AUTH_GATE_SECRET:?Set a unique APP_AUTH_GATE_SECRET}
-      # Les notifications poussees. Sans les cles VAPID, la chaine reste inerte.
-      - APP_PUSH_ENABLED=${APP_PUSH_ENABLED:-false}
-      - APP_PUSH_SUBJECT=${APP_PUSH_SUBJECT:-}
-      - APP_PUSH_VAPID_PUBLIC_KEY=${APP_PUSH_VAPID_PUBLIC_KEY:-}
-      - APP_PUSH_VAPID_PRIVATE_KEY=${APP_PUSH_VAPID_PRIVATE_KEY:-}
-      # Les durees de session, differenciees selon le compte.
-      - APP_SECURITY_STAFF_SESSION_TIMEOUT=${APP_SECURITY_STAFF_SESSION_TIMEOUT:-8h}
-      - APP_SECURITY_PLAYER_SESSION_TIMEOUT=${APP_SECURITY_PLAYER_SESSION_TIMEOUT:-24h}
-      - QR_LINK_PUBLIC_URL=${QR_LINK_PUBLIC_URL:-https://api.example.com/q}
-      - QR_LINK_SCAN_LANDING_URL=${QR_LINK_SCAN_LANDING_URL:-https://frontend.example.com/scan}
-      - DOMAIN=${DOMAIN}
-      - APP_SECURITY_ALLOWED_SUBDOMAINS=${APP_SECURITY_ALLOWED_SUBDOMAINS:-}
-      - APP_STS_DEBUG_COMBAT_ENABLED=${APP_STS_DEBUG_COMBAT_ENABLED:-false}
-      - APP_STS_PVP_ENABLED=${APP_STS_PVP_ENABLED:-false}
-      - APP_SECURITY_PRODUCTION_HARDENING_ENABLED=true
-    ports:
-      - "${BACKEND_BIND_ADDRESS:-127.0.0.1}:${BACKEND_PORT:-3457}:3457"
+      POSTGRES_DB: ${APP_DB_NAME:?Set APP_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: [sh, -c, 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  postgres-data:
+  redis-data:
