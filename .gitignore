@@ -1,0 +1,39 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.prod.example
+*.pem
+*.key
+cookies.txt
+
+# Build output and local tools
+.gradle/
+build/
+out/
+target/
+*.class
+.venv/
+__pycache__/
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Work logs and generated reports
+*.log
+*.out
+*-out.txt
+*-output.txt
+FORK_REPORT.md
+SANITIZATION_REPORT.md
+docs/openapi/
+docs/plans/
+docs/superpowers/
+.superpowers/
+.codex/
+.claude/
+.agents/
+/STS/

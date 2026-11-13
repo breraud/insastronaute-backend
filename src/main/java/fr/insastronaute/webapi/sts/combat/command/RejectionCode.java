@@ -1,0 +1,14 @@
+package fr.insastronaute.webapi.sts.combat.command;
+
+public enum RejectionCode {
+    COMBAT_NOT_FOUND_OR_MISMATCH,
+    STALE_REVISION,
+    DATA_VERSION_MISMATCH,
+    NOT_ACTOR_TURN,
+    CARD_NOT_IN_HAND,
+    INSUFFICIENT_ENERGY,
+    INVALID_TARGET,
+    INVALID_CARD_SELECTION,
+    UNSUPPORTED_EFFECT,
+    COMBAT_FINISHED
+}

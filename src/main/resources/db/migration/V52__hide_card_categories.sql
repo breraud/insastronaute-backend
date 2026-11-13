@@ -1,0 +1,2 @@
+ALTER TABLE card_categories
+    ADD COLUMN hidden BOOLEAN NOT NULL DEFAULT FALSE;

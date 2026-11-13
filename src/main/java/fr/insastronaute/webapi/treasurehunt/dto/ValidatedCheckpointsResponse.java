@@ -1,0 +1,5 @@
+package fr.insastronaute.webapi.treasurehunt.dto;
+
+import java.util.List;
+
+public record ValidatedCheckpointsResponse(List<ValidatedCheckpointResponse> checkpoints) { }

@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ADD COLUMN gender VARCHAR(20) NOT NULL DEFAULT 'NEUTRAL'
+        CHECK (gender IN ('MALE', 'FEMALE', 'NEUTRAL'));

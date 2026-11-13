@@ -1,0 +1,2 @@
+ALTER TABLE challenges
+    ADD COLUMN sensitive BOOLEAN NOT NULL DEFAULT FALSE;

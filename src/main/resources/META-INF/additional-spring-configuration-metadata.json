@@ -1,0 +1,46 @@
+{
+  "properties": [
+    {
+      "name": "app.proofs.cleanup.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables scheduled cleanup of expired proof uploads and stale proof drafts.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.articles.media-cleanup.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables scheduled cleanup of orphaned article media from the public S3 bucket.",
+      "defaultValue": true
+    },
+    {
+      "name": "app.articles.media-cleanup-cron",
+      "type": "java.lang.String",
+      "description": "Cron expression for scheduled article media cleanup.",
+      "defaultValue": "0 0 3 * * *"
+    },
+    {
+      "name": "app.game-config.object-prefix",
+      "type": "java.lang.String",
+      "description": "Public S3 object prefix where admin-managed game JSON configuration files are stored.",
+      "defaultValue": "GameData/current/dev/"
+    },
+    {
+      "name": "app.game-config.releases-object-prefix",
+      "type": "java.lang.String",
+      "description": "Public S3 object prefix where versioned game JSON configuration releases and latest metadata are stored.",
+      "defaultValue": "GameData/versions/"
+    },
+    {
+      "name": "spring.session.store-type",
+      "type": "java.lang.String",
+      "description": "Spring Session backing store. Use 'redis' in production and 'none' in tests.",
+      "defaultValue": "redis"
+    },
+    {
+      "name": "spring.session.redis.namespace",
+      "type": "java.lang.String",
+      "description": "Redis key namespace used by Spring Session.",
+      "defaultValue": "insastronaute:sessions"
+    }
+  ]
+}

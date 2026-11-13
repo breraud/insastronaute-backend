@@ -1,0 +1,26 @@
+package fr.insastronaute.webapi.sts.combat.model.modifier;
+
+public enum ModifierKind {
+    FLAT,
+    DISCARD,
+    PLAYED,
+    DEBUFF_ON_SELF,
+    BUFF_ON_SELF,
+    ARMOR_SCALING,
+    TARGET_NUMBER,
+    DEBUFF_ON_TARGET,
+    BUFF_ON_TARGET,
+    ARMOR_ON_SELF,
+    LOST_HP,
+    TARGET_LOST_HP,
+    TIME_UNTIL_NEXT_TURN,
+    ARMOR_ON_TARGET,
+    HP_LOST_SINCE_LAST_TURN,
+    DAMAGE_DEALT_WITH_LAST_ACTION,
+    SPECIFIC_STATUS_ON_SELF,
+    SPECIFIC_STATUS_ON_TARGET,
+    ENERGY_SPENT,
+    ENERGY_GAINED,
+    ACTION_EXHAUSTED,
+    ACTION_DISPELLED
+}
